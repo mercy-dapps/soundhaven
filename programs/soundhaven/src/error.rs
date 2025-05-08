@@ -21,5 +21,10 @@ pub enum SoundHavenError {
     #[msg("Playlist description is too long -  max length of 200 characters")]
     PlaylistDescriptionTooLong,
     #[msg("Playlist thumbnail url is too long -  max length of 200 characters")]
-    PlaylistThumbnailUrlTooLong
+    PlaylistThumbnailUrlTooLong,
+
+    #[msg("Invalid profile")]
+    InvalidProfile,
+    #[msg("Invalid song")]
+    InvalidSong,
 }

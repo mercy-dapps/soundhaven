@@ -4,6 +4,7 @@ use crate::state::*;
 use crate::error::SoundHavenError;
 
 #[derive(Accounts)]
+#[instruction(song_id: u64)]
 pub struct CreateSong<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
@@ -18,7 +19,7 @@ pub struct CreateSong<'info> {
     #[account(
         init,
         payer = user,
-        seeds = [b"song", user.key().as_ref(), &profile.song_count.to_le_bytes()],
+        seeds = [b"song", user.key().as_ref(), song_id.to_le_bytes().as_ref()],
         bump,
         space = 8 + Song::INIT_SPACE,
     )]
@@ -30,18 +31,20 @@ pub struct CreateSong<'info> {
 impl<'info> CreateSong<'info>  {
     pub fn create_song(
         &mut self, 
+        song_id: u64,
         song_title: String, 
         song_url: String,
         song_thumbnail_url: String,
         bumps: &CreateSongBumps
     ) -> Result<()> {
-        require!(song_title.len() > 50, SoundHavenError::SongTitleTooLong);
-        require!(song_url.len() > 200, SoundHavenError::SongUrlTooLong);
-        require!(song_thumbnail_url.len() > 200, SoundHavenError::SongThumbnailUrlTooLong);
+        require!(song_title.len() <= 50, SoundHavenError::SongTitleTooLong);
+        require!(song_url.len() <= 200, SoundHavenError::SongUrlTooLong);
+        require!(song_thumbnail_url.len() <= 200, SoundHavenError::SongThumbnailUrlTooLong);
 
         let mut profile = self.profile.clone();
         let song_owner = self.user.key();
         self.song.set_inner(Song { 
+            song_id,
             song_owner, 
             song_title, 
             song_url, 

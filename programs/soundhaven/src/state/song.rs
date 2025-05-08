@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(InitSpace)]
 pub struct Song {
+    pub song_id: u64,
     pub song_owner: Pubkey,
     #[max_len(50)]
     pub song_title: String,

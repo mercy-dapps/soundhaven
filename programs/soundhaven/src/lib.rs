@@ -25,4 +25,16 @@ pub mod soundhaven {
         ctx.accounts.create_profile(name, profile_img_avatar, description, is_artist, &ctx.bumps)?;
         Ok(())
     }
+
+    pub fn create_song(
+        ctx: Context<CreateSong>,
+        song_id: u64,
+        song_title: String,
+        song_url: String,
+        song_thumbnail_url: String
+    ) -> Result<()> {
+        ctx.accounts.create_song(song_id, song_title, song_url, song_thumbnail_url, &ctx.bumps)?;
+
+        Ok(())
+    }
 }
