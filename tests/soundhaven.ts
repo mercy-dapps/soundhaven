@@ -1,6 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
+import { randomBytes } from "crypto";
 import { BN } from "bn.js";
 import { Soundhaven } from "../target/types/soundhaven";
 
@@ -30,9 +31,21 @@ describe("soundhaven", async () => {
     program.programId
   )[0];
 
+  const seed_id = new BN(randomBytes(8));
+
+  const song = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("song"),
+      provider.wallet.publicKey.toBuffer(),
+      seed_id.toArrayLike(Buffer, "le", 8),
+    ],
+    program.programId
+  )[0];
+
   let accounts = {
     user: provider.wallet.publicKey,
     profile,
+    song,
   };
 
   it("create profile", async () => {
@@ -46,38 +59,23 @@ describe("soundhaven", async () => {
       .rpc();
 
     console.log("Your transaction signature", tx);
+    const profileAcc = await program.account.profile.fetch(profile);
+
+    console.log(profileAcc);
   });
 
   it("create song", async () => {
     let { song_title, song_url, song_thumbnail_url } = song_sample;
 
-    const profileAcc = await program.account.profile.fetch(profile);
-
-    const song = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("song"),
-        provider.wallet.publicKey.toBuffer(),
-        new BN(profileAcc.songCount).toArrayLike(Buffer, "le", 8),
-      ],
-      program.programId
-    )[0];
-
-    console.log(song, profileAcc.songCount);
-
     const tx = await program.methods
-      .createSong(song_title, song_url, song_thumbnail_url)
-      .accountsPartial({
-        user: provider.wallet.publicKey,
-        profile,
-        song,
-        systemProgram: SystemProgram.programId,
-      })
+      .createSong(seed_id, song_title, song_url, song_thumbnail_url)
+      .accounts({ ...accounts })
       .signers([provider.wallet.payer])
       .rpc();
 
     console.log("Your transaction signature", tx);
 
-    const songAcc = await program.account.profile.fetch(song);
+    const songAcc = await program.account.song.fetch(song);
 
     console.log("profile created", songAcc);
   });
