@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use anchor_spl::{
-    associated_token::AssociatedToken, token_interface::{Mint, TokenAccount, TokenInterface}
+    associated_token::AssociatedToken, token::{Mint, TokenAccount, Token}
 };
 
 use crate::state::*;
@@ -12,18 +12,7 @@ pub struct InitializeTokenVault<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
 
-    #[account(
-        mint::token_program = token_program
-    )]
-    pub mint_shn: InterfaceAccount<'info, Mint>,
-
-    #[account(
-        mut,
-        associated_token::mint = mint_shn,
-        associated_token::authority = admin,
-        associated_token::token_program = token_program
-    )]
-    pub admin_ata: InterfaceAccount<'info, TokenAccount>,
+    pub mint_shn: Account<'info, Mint>,
 
     #[account(
         init,
@@ -39,13 +28,12 @@ pub struct InitializeTokenVault<'info> {
         payer = admin,
         associated_token::mint = mint_shn,
         associated_token::authority = config,
-        associated_token::token_program = token_program
     )]
-    pub vault: InterfaceAccount<'info, TokenAccount>,
+    pub vault: Account<'info, TokenAccount>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program: Program<'info, Token>,
 
     pub system_program: Program<'info, System>
 }
