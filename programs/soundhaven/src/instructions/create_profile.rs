@@ -4,6 +4,7 @@ use crate::state::*;
 use  crate::error::SoundHavenError;
 
 #[derive(Accounts)]
+#[instruction(seed: u64)]
 pub struct CreateProfile<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
@@ -23,6 +24,7 @@ pub struct CreateProfile<'info> {
 impl<'info> CreateProfile<'info> {
     pub fn create_profile(
         &mut self, 
+        seed: u64,
         name: String, 
         profile_img_avatar: String, 
         description: String,
@@ -34,6 +36,8 @@ impl<'info> CreateProfile<'info> {
         require!(profile_img_avatar.len() <= 200, SoundHavenError::ProfileImgUrlTooLong);
 
         self.profile.set_inner(Profile { 
+            seed,
+            profile_owner: self.profile.key(),
             name, 
             profile_img_avatar, 
             description, 

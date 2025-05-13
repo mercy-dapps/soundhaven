@@ -21,18 +21,19 @@ pub struct Like<'info> {
         seeds = [b"song", song_owner.as_ref(), song_id.to_le_bytes().as_ref()],
         bump = song.bump,
     )]
-    pub song: Account<'info, Song>
+    pub song: Account<'info, Song>,
+     
+    pub system_program: Program<'info, System>
 }
 
 impl<'info> Like<'info> {
     pub fn like(
-        &mut self, 
-        ctx: Context<Like>, 
+        &mut self,
         song_key: Pubkey
     ) -> Result<()> {
 
-        let profile= &mut ctx.accounts.profile;
-        let song= &mut ctx.accounts.song;
+        let mut profile= self.profile.clone();
+        let mut song= self.song.clone();
 
         require!(song_key == self.song.key(), SoundHavenError::InvalidSong);
 

@@ -19,9 +19,11 @@ pub struct Follow<'info> {
     #[account(
         mut,
         seeds = [b"profile", follow_key.as_ref()],
-        bump = profile.bump
+        bump = follow_profile.bump
     )]
     pub follow_profile: Account<'info, Profile>,
+     
+    pub system_program: Program<'info, System>
 }
 
 impl<'info> Follow<'info> {
@@ -32,7 +34,10 @@ impl<'info> Follow<'info> {
 
         let mut profile= self.profile.clone();
 
-        let mut follow_profile= self.profile.clone();
+        let mut follow_profile= self.follow_profile.clone();
+
+        msg!("{:?}", follow_profile.key());
+        msg!("{:?}", follow_key);
 
         require!(follow_key == self.follow_profile.key(), SoundHavenError::InvalidProfile);
 

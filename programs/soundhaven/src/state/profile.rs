@@ -3,6 +3,8 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(InitSpace)]
 pub struct Profile {
+    pub seed: u64,
+    pub profile_owner: Pubkey,
     #[max_len(50)]
     pub name: String,
     #[max_len(200)]

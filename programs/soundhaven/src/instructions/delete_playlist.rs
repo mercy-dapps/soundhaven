@@ -18,7 +18,9 @@ pub struct DeletePlaylist<'info> {
         seeds = [b"profile", user.key().as_ref()],
         bump = profile.bump
     )]
-    pub profile: Account<'info, Profile>
+    pub profile: Account<'info, Profile>,
+    
+    pub system_program: Program<'info, System>
 }
 
 impl<'info> DeletePlaylist<'info> {

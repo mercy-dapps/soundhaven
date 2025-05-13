@@ -11,7 +11,9 @@ pub struct DeleteProfile<'info> {
         mut,
         close = user
     )]
-    pub profile: Account<'info, Profile>
+    pub profile: Account<'info, Profile>,
+     
+    pub system_program: Program<'info, System>
 }
 
 impl<'info> DeleteProfile<'info> {

@@ -4,22 +4,26 @@ use crate::state::*;
 use  crate::error::SoundHavenError;
 
 #[derive(Accounts)]
+#[instruction(seed: u64)]
 pub struct UpdateProfile<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
 
     #[account(
         mut,
-        seeds = [b"profile", user.key().as_ref()],
+        seeds = [b"profile", seed.to_le_bytes().as_ref()],
         bump = profile.bump,
         
     )]
-    pub profile: Account<'info, Profile>
+    pub profile: Account<'info, Profile>,
+     
+    pub system_program: Program<'info, System>
 }
 
 impl<'info> UpdateProfile<'info> {
     pub fn update_profile(
         &mut self, 
+        seed: u64,
         name: String, 
         profile_img_avatar: String, 
         description: String,
@@ -29,6 +33,8 @@ impl<'info> UpdateProfile<'info> {
         require!(profile_img_avatar.len() <= 200, SoundHavenError::ProfileImgUrlTooLong);
 
         self.profile.set_inner(Profile { 
+            seed,
+            profile_owner: self.profile.profile_owner,
             name, 
             profile_img_avatar, 
             description, 

@@ -4,6 +4,7 @@ use crate::state::*;
 use crate::error::SoundHavenError;
 
 #[derive(Accounts)]
+#[instruction(playlist_id: u64, seed: u64)]
 pub struct CreatePlaylist<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
@@ -18,7 +19,7 @@ pub struct CreatePlaylist<'info> {
     #[account(
         init,
         payer = user,
-        seeds = [b"playlist", user.key().as_ref(), &profile.playlist_count.to_le_bytes()],
+        seeds = [b"playlist", user.key().as_ref(), playlist_id.to_le_bytes().as_ref()],
         bump,
         space = 8 + Playlist::INIT_SPACE,
     )]
@@ -30,20 +31,22 @@ pub struct CreatePlaylist<'info> {
 impl<'info> CreatePlaylist<'info>  {
     pub fn create_playlist(
         &mut self, 
+        playlist_id: u64,
         playlist_title: String, 
         playlist_description: String,
         playlist_thumbnail_url: String,
         playlist_visibility: bool,
         bumps: &CreatePlaylistBumps
     ) -> Result<()> {
-        require!(playlist_title.len() > 50, SoundHavenError::PlaylistTitleTooLong);
-        require!(playlist_description.len() > 200, SoundHavenError::PlaylistDescriptionTooLong);
-        require!(playlist_thumbnail_url.len() > 200, SoundHavenError::PlaylistThumbnailUrlTooLong);
+        require!(playlist_title.len() <= 50, SoundHavenError::PlaylistTitleTooLong);
+        require!(playlist_description.len() <= 200, SoundHavenError::PlaylistDescriptionTooLong);
+        require!(playlist_thumbnail_url.len() <= 200, SoundHavenError::PlaylistThumbnailUrlTooLong);
 
         let mut profile = self.profile.clone();
         let playlist_owner = self.user.key();
        
         self.playlist.set_inner(Playlist { 
+            playlist_id,
             playlist_owner,
             playlist_title, 
             playlist_description, 

@@ -24,3 +24,18 @@ pub use delete_song::*;
 
 pub mod delete_playlist;
 pub use delete_playlist::*;
+
+pub mod initialize_vault;
+pub use initialize_vault::*;
+
+pub mod pay;
+pub use pay::*;
+
+pub mod initialize_token_vault;
+pub use initialize_token_vault::*;
+
+pub mod withdraw_fund;
+pub use withdraw_fund::*;
+
+pub mod claim_token_reward;
+pub use claim_token_reward::*;
