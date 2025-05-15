@@ -41,7 +41,24 @@ impl<'info> CreateSong<'info>  {
         require!(song_url.len() <= 200, SoundHavenError::SongUrlTooLong);
         require!(song_thumbnail_url.len() <= 200, SoundHavenError::SongThumbnailUrlTooLong);
 
-        let mut profile = self.profile.clone();
+        require!(self.profile.has_paid == true, SoundHavenError::PayToUploadSong);
+
+        self.profile.set_inner(Profile { 
+            seed: self.profile.seed, 
+            profile_owner: self.profile.profile_owner, 
+            name: self.profile.name.clone(), 
+            profile_img_avatar: self.profile.profile_img_avatar.clone(), 
+            description: self.profile.description.clone(), 
+            is_artist: self.profile.is_artist, 
+            has_paid: self.profile.has_paid, 
+            song_count: self.profile.song_count + 1, 
+            playlist_count: self.profile.playlist_count, 
+            likes_count: self.profile.likes_count, 
+            following_count: self.profile.following_count, 
+            followers_count: self.profile.followers_count, 
+            bump: self.profile.bump 
+        }); 
+        
         let song_owner = self.user.key();
         self.song.set_inner(Song { 
             song_id,
@@ -52,9 +69,6 @@ impl<'info> CreateSong<'info>  {
             song_likes_count: 0, 
             bump: bumps.song
         });
-
-        profile.song_count += 1;
-
         Ok(())
     }
 }

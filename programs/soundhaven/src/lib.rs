@@ -52,16 +52,59 @@ pub mod soundhaven {
         Ok(())
     }
 
+    // test not working yet
     pub fn like(ctx: Context<Like>, song_key: Pubkey) -> Result<()> {
         ctx.accounts.like(song_key)?;
 
         Ok(())
     }
+    // test not working yet
+    pub fn follow(ctx: Context<Follow>, follow_key: Pubkey) -> Result<()> {
+        ctx.accounts.follow(follow_key)?;
+        Ok(())
+    }
 
-    // pub fn follow(ctx: Context<Follow>, follow_key: Pubkey) -> Result<()> {
-    //     ctx.accounts.follow(follow_key)?;
-    //     Ok(())
-    // }
+    pub fn initialize_vault(ctx: Context<InitializeVault>) -> Result<()> {
+        ctx.accounts.initialize_vault(&ctx.bumps)
+    }
 
+    pub fn initialize_token_vault(ctx: Context<InitializeTokenVault>, seed: u64) -> Result<()> {
+        ctx.accounts.initialize_token_vault(seed, &ctx.bumps)
+    }
+
+    pub fn delete_playlist(ctx: Context<DeletePlaylist>) -> Result<()> {
+        ctx.accounts.delete_playlist()
+    }
+
+    pub fn delete_song(ctx: Context<DeleteSong>) -> Result<()> {
+        ctx.accounts.delete_song()
+    }
+
+    pub fn delete_profile(ctx: Context<DeleteProfile>) -> Result<()> {
+        ctx.accounts.delete_profile()
+    }
+
+    pub fn update_profile(
+        ctx: Context<UpdateProfile>,
+        seed: u64,
+        name: String,
+        profile_img_avatar: String,
+        description: String,
+    ) -> Result<()> {
+        ctx.accounts.update_profile(seed, name, profile_img_avatar, description)?;
+        Ok(())
+    }
+
+    pub fn pay(ctx: Context<Pay>) -> Result<()> {
+        ctx.accounts.pay()
+    }
+
+    pub fn claim(ctx: Context<ClaimTokenReward>, amount: u64) -> Result<()> {
+        ctx.accounts.claim(amount)
+    }
+
+    pub fn withdraw_fund(ctx: Context<WithdrawFund>, amount: u64) -> Result<()> {
+        ctx.accounts.withdraw(amount)
+    }
 
 }

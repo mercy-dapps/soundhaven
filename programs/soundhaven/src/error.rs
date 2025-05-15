@@ -27,4 +27,7 @@ pub enum SoundHavenError {
     InvalidProfile,
     #[msg("Invalid song")]
     InvalidSong,
+
+    #[msg("Pay to upload song")]
+    PayToUploadSong,
 }

@@ -1,6 +1,15 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import {
+  createAssociatedTokenAccountIdempotentInstruction,
+  createInitializeMint2Instruction,
+  createMintToInstruction,
+  getAssociatedTokenAddressSync,
+  getMinimumBalanceForRentExemptMint,
+  MINT_SIZE,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import {
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
@@ -20,12 +29,29 @@ describe("soundhaven", async () => {
 
   const connection = provider.connection;
 
+  // variables declarations
+
+  const user_seed = new BN(randomBytes(8));
+  const artist_seed = new BN(randomBytes(8));
+  const config_seed = new BN(randomBytes(8));
+  const song_id = new BN(randomBytes(8));
+  const playlist_id = new BN(randomBytes(8));
+
+  const tokenProgram = TOKEN_PROGRAM_ID;
+
   const profile_sample = {
     name: "Mercy",
     profile_img_avatar:
       "https://api.dicebear.com/9.x/adventurer/svg?seed=mercy",
     description: "Music lover",
     is_artist: false,
+  };
+
+  const update_profile_sample = {
+    name: "MercyDapp",
+    profile_img_avatar:
+      "https://api.dicebear.com/9.x/adventurer/svg?seed=mercydapp",
+    description: "Builder that loves music",
   };
 
   const profile_artist_sample = {
@@ -68,10 +94,31 @@ describe("soundhaven", async () => {
     return signature;
   };
 
-  const [user, artist] = Array.from({ length: 2 }, () => Keypair.generate());
+  const [user, artist, admin, mintShn] = Array.from({ length: 4 }, () =>
+    Keypair.generate()
+  );
 
-  const user_seed = new BN(randomBytes(8));
-  const artist_seed = new BN(randomBytes(8));
+  const userAtaSHN = getAssociatedTokenAddressSync(
+    mintShn.publicKey,
+    user.publicKey,
+    false,
+    tokenProgram
+  );
+
+  const vaultState = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("state"), admin.publicKey.toBuffer()],
+    program.programId
+  )[0];
+
+  const vault = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("vault"), vaultState.toBytes()],
+    program.programId
+  )[0];
+
+  const config = PublicKey.findProgramAddressSync(
+    [Buffer.from("config"), config_seed.toArrayLike(Buffer, "le", 8)],
+    program.programId
+  )[0];
 
   const profile = PublicKey.findProgramAddressSync(
     [Buffer.from("profile"), user.publicKey.toBuffer()],
@@ -83,8 +130,6 @@ describe("soundhaven", async () => {
     program.programId
   )[0];
 
-  const song_id = new BN(randomBytes(8));
-
   const song = PublicKey.findProgramAddressSync(
     [
       Buffer.from("song"),
@@ -93,8 +138,6 @@ describe("soundhaven", async () => {
     ],
     program.programId
   )[0];
-
-  const playlist_id = new BN(randomBytes(8));
 
   const playlist = PublicKey.findProgramAddressSync(
     [
@@ -105,26 +148,77 @@ describe("soundhaven", async () => {
     program.programId
   )[0];
 
+  const vaultToken = getAssociatedTokenAddressSync(
+    mintShn.publicKey,
+    config,
+    true
+  );
+
   let accounts = {
+    admin: admin.publicKey,
     user: user.publicKey,
+    mintShn: mintShn.publicKey,
     profile,
     song,
     playlist,
+    vault,
+    vaultState,
+    vaultToken,
+    userAtaSHN,
+    config,
+    tokenProgram,
   };
 
   it("airdrop", async () => {
+    let lamports = await getMinimumBalanceForRentExemptMint(connection);
+
     let tx = new Transaction();
     tx.instructions = [
-      ...[user, artist].map((a) =>
+      ...[user, artist, admin].map((a) =>
         SystemProgram.transfer({
           fromPubkey: provider.publicKey,
           toPubkey: a.publicKey,
           lamports: 10 * LAMPORTS_PER_SOL,
         })
       ),
+
+      SystemProgram.createAccount({
+        fromPubkey: provider.publicKey,
+        newAccountPubkey: mintShn.publicKey,
+        lamports,
+        space: MINT_SIZE,
+        programId: tokenProgram,
+      }),
+
+      ...[
+        { mint: mintShn.publicKey, authority: user.publicKey, ata: userAtaSHN },
+      ].flatMap((x) => [
+        createInitializeMint2Instruction(
+          x.mint,
+          6,
+          x.authority,
+          null,
+          tokenProgram
+        ),
+        createAssociatedTokenAccountIdempotentInstruction(
+          provider.publicKey,
+          x.ata,
+          x.authority,
+          x.mint,
+          tokenProgram
+        ),
+        createMintToInstruction(
+          x.mint,
+          x.ata,
+          x.authority,
+          1e9,
+          undefined,
+          tokenProgram
+        ),
+      ]),
     ];
 
-    await provider.sendAndConfirm(tx, []).then(log);
+    await provider.sendAndConfirm(tx, [user, mintShn]).then(log);
   });
 
   it("create two profiles - user and artist", async () => {
@@ -142,12 +236,9 @@ describe("soundhaven", async () => {
         ...accounts,
       })
       .signers([user])
-      .rpc();
-
-    console.log("Your transaction signature", tx_user);
-    const profileAcc = await program.account.profile.fetch(profile);
-
-    console.log(profileAcc);
+      .rpc()
+      .then(confirm)
+      .then(log);
 
     // artist account here
     const tx_artist = await program.methods
@@ -160,37 +251,11 @@ describe("soundhaven", async () => {
       )
       .accounts({
         user: artist.publicKey,
-        // profile,
-        // song,
-        // playlist,
       })
       .signers([artist])
-      .rpc();
-
-    console.log("Your transaction signature", tx_artist);
-    const profileArtistAcc = await program.account.profile.fetch(
-      profile_artist
-    );
-
-    console.log(profileArtistAcc);
-  });
-
-  it("create song", async () => {
-    let { song_title, song_url, song_thumbnail_url } = song_sample;
-
-    const tx = await program.methods
-      .createSong(song_id, song_title, song_url, song_thumbnail_url)
-      .accounts({
-        user: artist.publicKey,
-      })
-      .signers([artist])
-      .rpc();
-
-    console.log("Your transaction signature", tx);
-
-    const songAcc = await program.account.song.fetch(song);
-
-    console.log("song created", songAcc);
+      .rpc()
+      .then(confirm)
+      .then(log);
   });
 
   it("create playlist", async () => {
@@ -211,14 +276,127 @@ describe("soundhaven", async () => {
       )
       .accounts({ ...accounts })
       .signers([user])
-      .rpc();
-
-    console.log("Your transaction signature", tx);
-
-    const playlistAcc = await program.account.playlist.fetch(playlist);
-
-    console.log("playlist created", playlistAcc);
+      .rpc()
+      .then(confirm)
+      .then(log);
   });
+
+  it("initialize_vault", async () => {
+    await program.methods
+      .initializeVault()
+      .accounts({ ...accounts })
+      .signers([admin])
+      .rpc()
+      .then(confirm)
+      .then(log);
+  });
+
+  it("initialize_token_vault", async () => {
+    await program.methods
+      .initializeTokenVault(config_seed)
+      .accounts({ ...accounts })
+      .signers([admin])
+      .rpc()
+      .then(confirm)
+      .then(log);
+  });
+
+  it("update profile", async () => {
+    let { name, profile_img_avatar, description } = update_profile_sample;
+    const tx_user = await program.methods
+      .updateProfile(user_seed, name, profile_img_avatar, description)
+      .accounts({
+        ...accounts,
+      })
+      .signers([user])
+      .rpc()
+      .then(confirm)
+      .then(log);
+  });
+
+  it("pay to create song", async () => {
+    await program.methods
+      .pay()
+      .accountsPartial({
+        admin: admin.publicKey,
+        user: artist.publicKey,
+        vaultState,
+        vault,
+      })
+      .signers([artist])
+      .rpc()
+      .then(confirm)
+      .then(log);
+  });
+
+  it("create song", async () => {
+    let { song_title, song_url, song_thumbnail_url } = song_sample;
+
+    const tx = await program.methods
+      .createSong(song_id, song_title, song_url, song_thumbnail_url)
+      .accounts({ user: artist.publicKey })
+      .signers([artist])
+      .rpc()
+      .then(confirm)
+      .then(log);
+  });
+
+  // it("delete playlist", async () => {
+  //   await program.methods
+  //     .deletePlaylist()
+  //     .accountsPartial({
+  //       user: user.publicKey,
+  //       playlist,
+  //       profile,
+  //     })
+  //     .signers([user])
+  //     .rpc()
+  //     .then(confirm)
+  //     .then(log);
+  // });
+
+  // it("delete song", async () => {
+  //   await program.methods
+  //     .deleteSong()
+  //     .accounts({
+  //       user: artist.publicKey,
+  //       song,
+  //     })
+  //     .signers([artist])
+  //     .rpc()
+  //     .then(confirm)
+  //     .then(log);
+  // });
+
+  it("delete user", async () => {
+    await program.methods
+      .deleteProfile()
+      .accounts({ ...accounts })
+      .signers([user])
+      .rpc()
+      .then(confirm)
+      .then(log);
+  });
+
+  // it("claim reward - token", async () => {
+  //   await program.methods
+  //     .claim(new BN(1))
+  //     .accounts({ ...accounts })
+  //     .signers([user])
+  //     .rpc()
+  //     .then(confirm)
+  //     .then(log);
+  // });
+
+  // it("withdraw token", async () => {
+  //   await program.methods
+  //     .withdrawFund(new BN(1))
+  //     .accounts({ ...accounts })
+  //     .signers([user])
+  //     .rpc()
+  //     .then(confirm)
+  //     .then(log);
+  // });
 
   // it("follow an artist", async () => {
   //   const artist_key = await program.account.profile.fetch(profile_artist);
@@ -250,17 +428,17 @@ describe("soundhaven", async () => {
   //   console.log("followed artist", artistAcc);
   // });
 
-  it("like song", async () => {
-    const tx = await program.methods
-      .like(song)
-      .accounts({ ...accounts })
-      .signers([user])
-      .rpc();
+  // it("like song", async () => {
+  //   const tx = await program.methods
+  //     .like(song)
+  //     .accounts({ ...accounts })
+  //     .signers([user])
+  //     .rpc();
 
-    console.log("Your transaction signature", tx);
+  //   console.log("Your transaction signature", tx);
 
-    const songAcc = await program.account.song.fetch(song);
+  //   const songAcc = await program.account.song.fetch(song);
 
-    console.log("liked song", songAcc);
-  });
+  //   console.log("liked song", songAcc);
+  // });
 });

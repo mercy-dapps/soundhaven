@@ -4,7 +4,7 @@ use crate::state::*;
 use crate::error::SoundHavenError;
 
 #[derive(Accounts)]
-#[instruction(playlist_id: u64, seed: u64)]
+#[instruction(playlist_id: u64)]
 pub struct CreatePlaylist<'info> {
     #[account(mut)]
     pub user: Signer<'info>,

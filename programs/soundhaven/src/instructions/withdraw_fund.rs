@@ -1,8 +1,10 @@
 use anchor_lang::prelude::*;
 
 use anchor_spl::{
-    associated_token::AssociatedToken, token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked}
+    associated_token::AssociatedToken,
+    token::{transfer_checked, TransferChecked,Mint, Token, TokenAccount}
 };
+
 use crate::state::*;
 
 #[derive(Accounts)]
@@ -16,16 +18,15 @@ pub struct WithdrawFund<'info> {
     #[account(
         mint::token_program = token_program
     )]
-    pub mint_shn: InterfaceAccount<'info, Mint>,
+    pub mint_shn: Account<'info, Mint>,
 
     #[account(
         init_if_needed,
         payer = user,
         associated_token::mint = mint_shn,
         associated_token::authority = user,
-        associated_token::token_program = token_program
     )]
-    pub user_shn_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub user_shn_ata: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -38,12 +39,11 @@ pub struct WithdrawFund<'info> {
         mut,
         associated_token::mint = mint_shn,
         associated_token::authority = config,
-        associated_token::token_program = token_program
     )]
-    pub vault: InterfaceAccount<'info, TokenAccount>,
+    pub vault_token: Account<'info, TokenAccount>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
@@ -52,7 +52,7 @@ impl<'info> WithdrawFund<'info>  {
 
         let cpi_program = self.token_program.to_account_info();
         let cpi_accounts = TransferChecked {
-            from: self.vault.to_account_info(),
+            from: self.vault_token.to_account_info(),
             mint: self.mint_shn.to_account_info(),
             to: self.user_shn_ata.to_account_info(),
             authority: self.config.to_account_info()

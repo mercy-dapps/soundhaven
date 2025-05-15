@@ -11,7 +11,7 @@ pub struct UpdateProfile<'info> {
 
     #[account(
         mut,
-        seeds = [b"profile", seed.to_le_bytes().as_ref()],
+        seeds = [b"profile", user.key().as_ref()],
         bump = profile.bump,
         
     )]

@@ -17,7 +17,7 @@ pub struct DeleteProfile<'info> {
 }
 
 impl<'info> DeleteProfile<'info> {
-    pub fn delete_profile() -> Result<()> {
+    pub fn delete_profile(&mut self) -> Result<()> {
 
         Ok(())
     }

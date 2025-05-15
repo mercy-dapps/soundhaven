@@ -19,9 +19,10 @@ pub struct InitializeTokenVault<'info> {
         payer = admin,
         seeds = [b"config", seed.to_le_bytes().as_ref()],
         bump,
-        space = Config::INIT_SPACE
+        space = 8 + Config::INIT_SPACE
        )]
-       pub config: Account<'info, Config>,
+    
+    pub config: Account<'info, Config>,
 
        #[account(
         init,
@@ -29,7 +30,7 @@ pub struct InitializeTokenVault<'info> {
         associated_token::mint = mint_shn,
         associated_token::authority = config,
     )]
-    pub vault: Account<'info, TokenAccount>,
+    pub vault_token: Account<'info, TokenAccount>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 
@@ -39,7 +40,7 @@ pub struct InitializeTokenVault<'info> {
 }
 
 impl<'info> InitializeTokenVault<'info> {
-    pub fn initialize_vault(
+    pub fn initialize_token_vault(
         &mut self, 
         seed: u64,
         bumps: &InitializeTokenVaultBumps
