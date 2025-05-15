@@ -52,15 +52,14 @@ pub mod soundhaven {
         Ok(())
     }
 
-    // test not working yet
-    pub fn like(ctx: Context<Like>, song_key: Pubkey) -> Result<()> {
-        ctx.accounts.like(song_key)?;
+    pub fn like(ctx: Context<Like>, _song_id: u64, song_owner: Pubkey) -> Result<()> {
+        ctx.accounts.like(song_owner)?;
 
         Ok(())
     }
     // test not working yet
-    pub fn follow(ctx: Context<Follow>, follow_key: Pubkey) -> Result<()> {
-        ctx.accounts.follow(follow_key)?;
+    pub fn follow(ctx: Context<Follow>, profile_owner: Pubkey, follow_profile_owner: Pubkey) -> Result<()> {
+        ctx.accounts.follow(profile_owner, follow_profile_owner)?;
         Ok(())
     }
 

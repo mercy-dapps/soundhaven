@@ -4,21 +4,21 @@ use crate::state::*;
 use crate::error::SoundHavenError;
 
 #[derive(Accounts)]
-#[instruction(follow_key: Pubkey)]
+#[instruction(profile_owner: Pubkey, follow_profile_owner: Pubkey)]
 pub struct Follow<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
 
     #[account(
         mut,
-        seeds = [b"profile", user.key().as_ref()],
+        seeds = [b"profile", profile_owner.key().as_ref()],
         bump = profile.bump
     )]
     pub profile: Account<'info, Profile>,
 
     #[account(
         mut,
-        seeds = [b"profile", follow_key.as_ref()],
+        seeds = [b"profile", follow_profile_owner.as_ref()],
         bump = follow_profile.bump
     )]
     pub follow_profile: Account<'info, Profile>,
@@ -29,21 +29,44 @@ pub struct Follow<'info> {
 impl<'info> Follow<'info> {
     pub fn follow(
         &mut self, 
-        follow_key: Pubkey,
+        profile_owner: Pubkey,
+        follow_profile_owner: Pubkey
     ) -> Result<()> {
+        
+        require!(profile_owner == self.profile.profile_owner, SoundHavenError::InvalidProfile);
+        require!(follow_profile_owner == self.follow_profile.profile_owner, SoundHavenError::InvalidProfile);
 
-        let mut profile= self.profile.clone();
+        self.profile.set_inner(Profile { 
+            seed: self.profile.seed, 
+            profile_owner: self.profile.profile_owner, 
+            name: self.profile.name.clone(), 
+            profile_img_avatar: self.profile.profile_img_avatar.clone(), 
+            description: self.profile.description.clone(), 
+            is_artist: self.profile.is_artist, 
+            has_paid: true, 
+            song_count: self.profile.song_count, 
+            playlist_count: self.profile.playlist_count, 
+            likes_count: self.profile.likes_count, 
+            following_count: self.profile.following_count + 1, 
+            followers_count: self.profile.followers_count, 
+            bump: self.profile.bump 
+        }); 
 
-        let mut follow_profile= self.follow_profile.clone();
-
-        msg!("{:?}", follow_profile.key());
-        msg!("{:?}", follow_key);
-
-        require!(follow_key == self.follow_profile.key(), SoundHavenError::InvalidProfile);
-
-        profile.following_count += 1;
-        follow_profile.followers_count += 1;
-
+        self.follow_profile.set_inner(Profile { 
+            seed: self.profile.seed, 
+            profile_owner: self.profile.profile_owner, 
+            name: self.profile.name.clone(), 
+            profile_img_avatar: self.profile.profile_img_avatar.clone(), 
+            description: self.profile.description.clone(), 
+            is_artist: self.profile.is_artist, 
+            has_paid: true, 
+            song_count: self.profile.song_count, 
+            playlist_count: self.profile.playlist_count, 
+            likes_count: self.profile.likes_count, 
+            following_count: self.profile.following_count, 
+            followers_count: self.profile.followers_count + 1, 
+            bump: self.profile.bump 
+        }); 
 
         Ok(())
     }

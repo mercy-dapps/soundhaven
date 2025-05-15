@@ -29,16 +29,36 @@ pub struct Like<'info> {
 impl<'info> Like<'info> {
     pub fn like(
         &mut self,
-        song_key: Pubkey
+        song_owner: Pubkey
     ) -> Result<()> {
 
-        let mut profile= self.profile.clone();
-        let mut song= self.song.clone();
+        require!(song_owner == self.song.song_owner, SoundHavenError::InvalidSong);
 
-        require!(song_key == self.song.key(), SoundHavenError::InvalidSong);
+        self.profile.set_inner(Profile { 
+            seed: self.profile.seed, 
+            profile_owner: self.profile.profile_owner, 
+            name: self.profile.name.clone(), 
+            profile_img_avatar: self.profile.profile_img_avatar.clone(), 
+            description: self.profile.description.clone(), 
+            is_artist: self.profile.is_artist, 
+            has_paid: true, 
+            song_count: self.profile.song_count, 
+            playlist_count: self.profile.playlist_count, 
+            likes_count: self.profile.likes_count, 
+            following_count: self.profile.following_count, 
+            followers_count: self.profile.followers_count, 
+            bump: self.profile.bump 
+        }); 
 
-        profile.likes_count += 1;
-        song.song_likes_count += 1;
+        self.song.set_inner(Song { 
+            song_id: self.song.song_id, 
+            song_owner: self.song.song_owner, 
+            song_title: self.song.song_title.clone(), 
+            song_url: self.song.song_url.clone(), 
+            song_thumbnail_url: self.song.song_thumbnail_url.clone(), 
+            song_likes_count: self.song.song_likes_count + 1, 
+            bump: self.song.bump 
+        });
 
         Ok(())
     }

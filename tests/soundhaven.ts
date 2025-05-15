@@ -224,7 +224,7 @@ describe("soundhaven", async () => {
   it("create two profiles - user and artist", async () => {
     // user account here
     let { name, profile_img_avatar, description, is_artist } = profile_sample;
-    const tx_user = await program.methods
+    await program.methods
       .createProfile(
         user_seed,
         name,
@@ -241,7 +241,7 @@ describe("soundhaven", async () => {
       .then(log);
 
     // artist account here
-    const tx_artist = await program.methods
+    await program.methods
       .createProfile(
         artist_seed,
         profile_artist_sample.name,
@@ -368,16 +368,6 @@ describe("soundhaven", async () => {
   //     .then(log);
   // });
 
-  it("delete user", async () => {
-    await program.methods
-      .deleteProfile()
-      .accounts({ ...accounts })
-      .signers([user])
-      .rpc()
-      .then(confirm)
-      .then(log);
-  });
-
   // it("claim reward - token", async () => {
   //   await program.methods
   //     .claim(new BN(1))
@@ -399,25 +389,26 @@ describe("soundhaven", async () => {
   // });
 
   // it("follow an artist", async () => {
-  //   const artist_key = await program.account.profile.fetch(profile_artist);
+  //   const artistAccount = await program.account.profile.fetch(profile_artist);
+  //   const userAccount = await program.account.profile.fetch(profile);
 
-  //   console.log(artist_key.profileOwner);
+  //   console.log("profile", user.publicKey);
+  //   console.log("follow profile", profile_artist);
 
-  //   const follow_profile_artist = PublicKey.findProgramAddressSync(
-  //     [Buffer.from("profile"), artist_key.profileOwner.toBuffer()],
-  //     program.programId
-  //   )[0];
+  //   console.log("fetched artist", artistAccount.profileOwner);
+  //   console.log("fetched user", userAccount.profileOwner);
 
-  //   console.log(follow_profile_artist);
+  //   console.log("fetched profile*", userAccount.profileOwner);
+  //   console.log("signer*", user.publicKey);
 
+  //   console.log(artistAccount, userAccount);
   //   const tx = await program.methods
-  //     .follow(artist_key.profileOwner)
+  //     .follow(userAccount.profileOwner, artistAccount.profileOwner)
   //     .accountsPartial({
   //       user: user.publicKey,
-  //       profile: user.publicKey,
-  //       followProfile: follow_profile_artist,
+  //       profile,
+  //       followProfile: profile_artist,
   //     })
-  //     // .accounts({...accounts})
   //     .signers([user])
   //     .rpc();
 
@@ -428,17 +419,25 @@ describe("soundhaven", async () => {
   //   console.log("followed artist", artistAcc);
   // });
 
-  // it("like song", async () => {
-  //   const tx = await program.methods
-  //     .like(song)
-  //     .accounts({ ...accounts })
-  //     .signers([user])
-  //     .rpc();
+  it("like song", async () => {
+    let songAccount = await program.account.song.fetch(song);
 
-  //   console.log("Your transaction signature", tx);
+    const tx = await program.methods
+      .like(songAccount.songId, songAccount.songOwner)
+      .accounts({ ...accounts })
+      .signers([user])
+      .rpc()
+      .then(confirm)
+      .then(log);
+  });
 
-  //   const songAcc = await program.account.song.fetch(song);
-
-  //   console.log("liked song", songAcc);
-  // });
+  it("delete user", async () => {
+    await program.methods
+      .deleteProfile()
+      .accounts({ ...accounts })
+      .signers([user])
+      .rpc()
+      .then(confirm)
+      .then(log);
+  });
 });
