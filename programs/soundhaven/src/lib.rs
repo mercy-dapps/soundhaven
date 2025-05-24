@@ -71,11 +71,11 @@ pub mod soundhaven {
         ctx.accounts.initialize_token_vault(seed, &ctx.bumps)
     }
 
-    pub fn delete_playlist(ctx: Context<DeletePlaylist>) -> Result<()> {
+    pub fn delete_playlist(ctx: Context<DeletePlaylist>, _playlist_id: u64) -> Result<()> {
         ctx.accounts.delete_playlist()
     }
 
-    pub fn delete_song(ctx: Context<DeleteSong>) -> Result<()> {
+    pub fn delete_song(ctx: Context<DeleteSong>, _song_id: u64) -> Result<()> {
         ctx.accounts.delete_song()
     }
 

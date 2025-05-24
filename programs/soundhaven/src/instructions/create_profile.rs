@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::state::*;
-use  crate::error::SoundHavenError;
+use crate::error::SoundHavenError;
 
 #[derive(Accounts)]
 #[instruction(seed: u64)]

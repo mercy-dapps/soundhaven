@@ -42,7 +42,6 @@ impl<'info> CreatePlaylist<'info>  {
         require!(playlist_description.len() <= 200, SoundHavenError::PlaylistDescriptionTooLong);
         require!(playlist_thumbnail_url.len() <= 200, SoundHavenError::PlaylistThumbnailUrlTooLong);
 
-        let mut profile = self.profile.clone();
         let playlist_owner = self.user.key();
        
         self.playlist.set_inner(Playlist { 
@@ -56,7 +55,21 @@ impl<'info> CreatePlaylist<'info>  {
             bump: bumps.playlist
         });
 
-        profile.playlist_count += 1;
+        self.profile.set_inner(Profile { 
+            seed: self.profile.seed, 
+            profile_owner: self.profile.profile_owner, 
+            name: self.profile.name.clone(), 
+            profile_img_avatar: self.profile.profile_img_avatar.clone(), 
+            description: self.profile.description.clone(), 
+            is_artist: self.profile.is_artist, 
+            has_paid: true, 
+            song_count: self.profile.song_count, 
+            playlist_count: self.profile.playlist_count + 1, 
+            likes_count: self.profile.likes_count, 
+            following_count: self.profile.following_count, 
+            followers_count: self.profile.followers_count, 
+            bump: self.profile.bump 
+        }); 
 
         Ok(())
     }

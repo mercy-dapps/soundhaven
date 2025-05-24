@@ -341,32 +341,24 @@ describe("soundhaven", async () => {
       .then(log);
   });
 
-  // it("delete playlist", async () => {
-  //   await program.methods
-  //     .deletePlaylist()
-  //     .accountsPartial({
-  //       user: user.publicKey,
-  //       playlist,
-  //       profile,
-  //     })
-  //     .signers([user])
-  //     .rpc()
-  //     .then(confirm)
-  //     .then(log);
-  // });
+  it("delete playlist", async () => {
+    let userAccount = await program.account.profile.fetch(profile);
 
-  // it("delete song", async () => {
-  //   await program.methods
-  //     .deleteSong()
-  //     .accounts({
-  //       user: artist.publicKey,
-  //       song,
-  //     })
-  //     .signers([artist])
-  //     .rpc()
-  //     .then(confirm)
-  //     .then(log);
-  // });
+    console.log(userAccount);
+    let playlistAccount = await program.account.playlist.fetch(playlist);
+
+    await program.methods
+      .deletePlaylist(playlistAccount.playlistId)
+      .accountsPartial({
+        user: user.publicKey,
+        playlist,
+        profile,
+      })
+      .signers([user])
+      .rpc()
+      .then(confirm)
+      .then(log);
+  });
 
   // it("claim reward - token", async () => {
   //   await program.methods
@@ -392,16 +384,6 @@ describe("soundhaven", async () => {
   //   const artistAccount = await program.account.profile.fetch(profile_artist);
   //   const userAccount = await program.account.profile.fetch(profile);
 
-  //   console.log("profile", user.publicKey);
-  //   console.log("follow profile", profile_artist);
-
-  //   console.log("fetched artist", artistAccount.profileOwner);
-  //   console.log("fetched user", userAccount.profileOwner);
-
-  //   console.log("fetched profile*", userAccount.profileOwner);
-  //   console.log("signer*", user.publicKey);
-
-  //   console.log(artistAccount, userAccount);
   //   const tx = await program.methods
   //     .follow(userAccount.profileOwner, artistAccount.profileOwner)
   //     .accountsPartial({
@@ -439,5 +421,18 @@ describe("soundhaven", async () => {
       .rpc()
       .then(confirm)
       .then(log);
+  });
+
+  it("delete song", async () => {
+    await program.methods
+      .deleteSong(song_id)
+      .accounts({
+        user: artist.publicKey,
+      })
+      .signers([artist])
+      .rpc()
+      .then(confirm)
+      .then(log);
+      
   });
 });
