@@ -98,12 +98,30 @@ describe("soundhaven", async () => {
     Keypair.generate()
   );
 
-  const userAtaSHN = getAssociatedTokenAddressSync(
-    mintShn.publicKey,
-    user.publicKey,
-    false,
-    tokenProgram
-  );
+  // const userAtaSHN = getAssociatedTokenAddressSync(
+  //   mintShn.publicKey,
+  //   user.publicKey,
+  //   false,
+  //   tokenProgram
+  // );
+
+  // const adminAtaSHN = getAssociatedTokenAddressSync(
+  //   mintShn.publicKey,
+  //   admin.publicKey,
+  //   false,
+  //   tokenProgram
+  // );
+
+  const [userAtaSHN, adminAtaSHN] = [user, admin]
+    .map((a) =>
+        getAssociatedTokenAddressSync(
+          mintShn.publicKey,
+          a.publicKey,
+          false,
+          tokenProgram
+        )
+      )
+    .flat();
 
   const vaultState = anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("state"), admin.publicKey.toBuffer()],
@@ -165,6 +183,7 @@ describe("soundhaven", async () => {
     vaultState,
     vaultToken,
     userAtaSHN,
+    adminAtaSHN,
     config,
     tokenProgram,
   };
@@ -191,7 +210,7 @@ describe("soundhaven", async () => {
       }),
 
       ...[
-        { mint: mintShn.publicKey, authority: user.publicKey, ata: userAtaSHN },
+        { mint: mintShn.publicKey, authority: admin.publicKey, ata: adminAtaSHN },
       ].flatMap((x) => [
         createInitializeMint2Instruction(
           x.mint,
@@ -218,7 +237,7 @@ describe("soundhaven", async () => {
       ]),
     ];
 
-    await provider.sendAndConfirm(tx, [user, mintShn]).then(log);
+    await provider.sendAndConfirm(tx, [admin, mintShn]).then(log);
   });
 
   it("create two profiles - user and artist", async () => {
@@ -360,25 +379,25 @@ describe("soundhaven", async () => {
       .then(log);
   });
 
-  // it("claim reward - token", async () => {
-  //   await program.methods
-  //     .claim(new BN(1))
-  //     .accounts({ ...accounts })
-  //     .signers([user])
-  //     .rpc()
-  //     .then(confirm)
-  //     .then(log);
-  // });
+  it("claim reward - token", async () => {
+    await program.methods
+      .claim(new BN(1))
+      .accounts({ ...accounts })
+      .signers([admin, user])
+      .rpc()
+      .then(confirm)
+      .then(log);
+  });
 
-  // it("withdraw token", async () => {
-  //   await program.methods
-  //     .withdrawFund(new BN(1))
-  //     .accounts({ ...accounts })
-  //     .signers([user])
-  //     .rpc()
-  //     .then(confirm)
-  //     .then(log);
-  // });
+  it("withdraw token", async () => {
+    await program.methods
+      .withdrawFund(new BN(1))
+      .accounts({ ...accounts })
+      .signers([user])
+      .rpc()
+      .then(confirm)
+      .then(log);
+  });
 
   // it("follow an artist", async () => {
   //   const artistAccount = await program.account.profile.fetch(profile_artist);

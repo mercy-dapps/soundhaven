@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token::{transfer_checked, TransferChecked,Mint, Token, TokenAccount}
+    token::{transfer_checked, TransferChecked, Mint, Token, TokenAccount}
 };
 
 use crate::state::*;
@@ -21,8 +21,7 @@ pub struct WithdrawFund<'info> {
     pub mint_shn: Account<'info, Mint>,
 
     #[account(
-        init_if_needed,
-        payer = user,
+        mut,
         associated_token::mint = mint_shn,
         associated_token::authority = user,
     )]
@@ -51,6 +50,7 @@ impl<'info> WithdrawFund<'info>  {
     pub fn withdraw(&mut self, amount: u64) -> Result<()> {
 
         let cpi_program = self.token_program.to_account_info();
+
         let cpi_accounts = TransferChecked {
             from: self.vault_token.to_account_info(),
             mint: self.mint_shn.to_account_info(),
@@ -60,7 +60,6 @@ impl<'info> WithdrawFund<'info>  {
 
         let seeds = &[
             b"config",
-            self.admin.to_account_info().key.as_ref(), 
             &self.config.seed.to_le_bytes()[..],
             &[self.config.bump]
         ];
