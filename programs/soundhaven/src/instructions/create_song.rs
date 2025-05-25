@@ -51,7 +51,7 @@ impl<'info> CreateSong<'info>  {
             description: self.profile.description.clone(), 
             is_artist: self.profile.is_artist, 
             has_paid: self.profile.has_paid, 
-            song_count: self.profile.song_count + 1, 
+            song_count: self.profile.song_count.checked_add(1).unwrap(), 
             playlist_count: self.profile.playlist_count, 
             likes_count: self.profile.likes_count, 
             following_count: self.profile.following_count, 

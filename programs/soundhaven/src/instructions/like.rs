@@ -56,7 +56,7 @@ impl<'info> Like<'info> {
             song_title: self.song.song_title.clone(), 
             song_url: self.song.song_url.clone(), 
             song_thumbnail_url: self.song.song_thumbnail_url.clone(), 
-            song_likes_count: self.song.song_likes_count + 1, 
+            song_likes_count: self.song.song_likes_count.checked_add(1).unwrap(), 
             bump: self.song.bump 
         });
 

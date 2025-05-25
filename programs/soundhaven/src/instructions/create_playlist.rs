@@ -64,7 +64,7 @@ impl<'info> CreatePlaylist<'info>  {
             is_artist: self.profile.is_artist, 
             has_paid: true, 
             song_count: self.profile.song_count, 
-            playlist_count: self.profile.playlist_count + 1, 
+            playlist_count: self.profile.playlist_count.checked_add(1).unwrap(), 
             likes_count: self.profile.likes_count, 
             following_count: self.profile.following_count, 
             followers_count: self.profile.followers_count, 

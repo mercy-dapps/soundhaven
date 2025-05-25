@@ -37,7 +37,7 @@ impl<'info> CreateProfile<'info> {
 
         self.profile.set_inner(Profile { 
             seed,
-            profile_owner: self.profile.key(),
+            profile_owner: self.user.key(),
             name, 
             profile_img_avatar, 
             description, 
