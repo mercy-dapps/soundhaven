@@ -182,7 +182,7 @@ describe("soundhaven", async () => {
         SystemProgram.transfer({
           fromPubkey: provider.publicKey,
           toPubkey: a.publicKey,
-          lamports: 5 * LAMPORTS_PER_SOL,
+          lamports: 2 * LAMPORTS_PER_SOL,
         })
       ),
 
