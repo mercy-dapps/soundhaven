@@ -21,7 +21,6 @@ import { BN } from "bn.js";
 import { Soundhaven } from "../target/types/soundhaven";
 
 describe("soundhaven", async () => {
-  // Configure the client to use the local cluster.
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
@@ -88,7 +87,7 @@ describe("soundhaven", async () => {
 
   const log = async (signature: string): Promise<string> => {
     console.log(
-      `Your transaction signature: https://explorer.solana.com/transaction/${signature}?cluster=custom&customUrl=${connection.rpcEndpoint}`
+      `Your transaction signature: https://explorer.solana.com/transaction/${signature}?cluster=devnet`
     );
 
     return signature;
@@ -97,20 +96,6 @@ describe("soundhaven", async () => {
   const [user, artist, admin, mintShn] = Array.from({ length: 4 }, () =>
     Keypair.generate()
   );
-
-  // const userAtaSHN = getAssociatedTokenAddressSync(
-  //   mintShn.publicKey,
-  //   user.publicKey,
-  //   false,
-  //   tokenProgram
-  // );
-
-  // const adminAtaSHN = getAssociatedTokenAddressSync(
-  //   mintShn.publicKey,
-  //   admin.publicKey,
-  //   false,
-  //   tokenProgram
-  // );
 
   const [userAtaSHN, adminAtaSHN] = [user, admin]
     .map((a) =>
@@ -197,7 +182,7 @@ describe("soundhaven", async () => {
         SystemProgram.transfer({
           fromPubkey: provider.publicKey,
           toPubkey: a.publicKey,
-          lamports: 10 * LAMPORTS_PER_SOL,
+          lamports: 5 * LAMPORTS_PER_SOL,
         })
       ),
 
@@ -241,7 +226,16 @@ describe("soundhaven", async () => {
       ]),
     ];
 
-    await provider.sendAndConfirm(tx, [admin, mintShn]).then(log);
+    try {
+      await provider.sendAndConfirm(tx, [
+        provider.wallet.payer,
+        admin,
+        mintShn,
+      ]);
+    } catch (err) {
+      console.error("Transaction failed:", err);
+      if (err.logs) console.log("Logs:", err.logs);
+    }
   });
 
   it("create two profiles - user and artist", async () => {
